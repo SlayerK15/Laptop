@@ -9,7 +9,8 @@
  */
 
 import {ai} from '@/ai/ai-instance';
-import {Laptop, getLaptopsFromCSV} from '@/services/laptop-scraper';
+import {getLaptopsFromCSV} from '@/services/laptop-scraper';
+import {Laptop} from '@/types/laptop';
 import {z} from 'genkit';
 
 const LaptopRecommendationInputSchema = z.object({
@@ -84,11 +85,26 @@ const recommendLaptopsFlow = ai.defineFlow<
   outputSchema: LaptopRecommendationOutputSchema,
 }, async input => {
   // Scrape laptop data from e-commerce websites.
-  const laptops = await getLaptopsFromCSV('data.csv');
+  const allLaptops:Laptop[] = await getLaptopsFromCSV('./data.csv');
+
+
+    // Filter laptops based on user's budget
+  const filteredLaptops = allLaptops.filter(laptop => laptop.price <= input.budget);
+
+  // Convert the filtered laptops to JSON string
+
+  if(filteredLaptops.length==0){
+    return [];
+  }
+
+  //check if no filtered laptop
+
+  
+
+  const laptops = filteredLaptops;
   const laptopsJSON = JSON.stringify(laptops);
 
-  // Call the laptop recommendation prompt with the user's needs and available laptops.
-  const {output} = await laptopRecommendationPrompt({
+    const {output} = await laptopRecommendationPrompt({
     ...input,
     laptops: laptopsJSON,
   });
